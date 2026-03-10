@@ -1,6 +1,8 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import Database from 'better-sqlite3';
+import { Server } from 'socket.io';
+import http from 'http';
 
 const db = new Database('app.db');
 
@@ -13,6 +15,14 @@ db.exec(`
 `);
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
 app.use(express.json({ limit: '50mb' }));
 
 app.get('/api/data', (req, res) => {
@@ -41,11 +51,21 @@ app.post('/api/data', (req, res) => {
       if (theme) stmt.run('theme', JSON.stringify(theme));
     })();
     
+    // Broadcast the update to all connected clients
+    io.emit('data_updated', { pages, theme });
+    
     res.json({ success: true });
   } catch (error) {
     console.error('Error saving data:', error);
     res.status(500).json({ error: 'Failed to save data' });
   }
+});
+
+io.on('connection', (socket) => {
+  console.log('A user connected');
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
 });
 
 async function startServer() {
@@ -61,7 +81,7 @@ async function startServer() {
     app.use(express.static('dist'));
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

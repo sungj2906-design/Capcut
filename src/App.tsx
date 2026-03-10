@@ -10,6 +10,7 @@ import AdminLogin from './components/AdminLogin';
 import AdminPanel from './components/AdminPanel';
 import UserLogin from './components/UserLogin';
 import StarterPage from './components/StarterPage';
+import { io } from 'socket.io-client';
 
 export default function App() {
   const [pages, setPages] = useState<PageData[]>([]);
@@ -80,6 +81,22 @@ export default function App() {
     };
 
     loadData();
+
+    // Setup Socket.IO for real-time updates
+    const socket = io();
+    
+    socket.on('data_updated', (data: { pages?: PageData[], theme?: ThemeConfig }) => {
+      if (data.pages) {
+        setPages(data.pages);
+      }
+      if (data.theme) {
+        setTheme(prevTheme => ({ ...prevTheme, ...data.theme }));
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const savePages = async (newPages: PageData[], newTheme: ThemeConfig) => {
