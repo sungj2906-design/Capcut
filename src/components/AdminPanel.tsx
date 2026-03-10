@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PageData, ThemeConfig } from '../data/initialPages';
-import { Save, LogOut, Search, Upload, X, Layout, FileText, PlaySquare, KeyRound } from 'lucide-react';
+import { Save, LogOut, Search, Upload, X, Layout, FileText, PlaySquare, KeyRound, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface Props {
   pages: PageData[];
@@ -15,17 +15,70 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
   const [selectedPageNum, setSelectedPageNum] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'home' | 'pages' | 'starter' | 'login'>('pages');
+  
+  // Auto-save state
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  const localPagesRef = useRef(localPages);
+  const localThemeRef = useRef(localTheme);
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+  const onSaveRef = useRef(onSave);
 
   const selectedPage = localPages.find(p => p.pageNumber === selectedPageNum) || localPages[0];
+
+  useEffect(() => {
+    localPagesRef.current = localPages;
+    localThemeRef.current = localTheme;
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+    onSaveRef.current = onSave;
+  }, [localPages, localTheme, hasUnsavedChanges, onSave]);
+
+  // Trigger auto-save every 30 seconds if there are unsaved changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (hasUnsavedChangesRef.current) {
+        performAutoSave();
+      }
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const performAutoSave = async () => {
+    setSaveStatus('saving');
+    try {
+      const currentPages = localPagesRef.current;
+      const currentTheme = localThemeRef.current;
+      
+      // Save to local storage as requested
+      localStorage.setItem('admin_draft_pages', JSON.stringify(currentPages));
+      localStorage.setItem('admin_draft_theme', JSON.stringify(currentTheme));
+      
+      await onSaveRef.current(currentPages, currentTheme);
+      setSaveStatus('saved');
+      setHasUnsavedChanges(false);
+      
+      // Reset status back to idle after a few seconds
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 3000);
+    } catch (error) {
+      console.error("Auto-save failed:", error);
+      setSaveStatus('idle');
+    }
+  };
 
   const handleUpdatePage = (field: keyof PageData, value: string | string[]) => {
     setLocalPages(prev => prev.map(p => 
       p.pageNumber === selectedPageNum ? { ...p, [field]: value } : p
     ));
+    setHasUnsavedChanges(true);
   };
 
   const handleUpdateTheme = (field: keyof ThemeConfig, value: string) => {
     setLocalTheme(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,8 +105,7 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
   };
 
   const handleSaveAll = () => {
-    onSave(localPages, localTheme);
-    alert('All changes saved successfully.');
+    performAutoSave();
   };
 
   const filteredPages = localPages.filter(p => 
@@ -66,7 +118,19 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
       {/* Sidebar */}
       <div className="w-full md:w-80 bg-charcoal border-r border-white/5 flex flex-col h-screen">
         <div className="p-6 border-b border-white/5">
-          <h2 className="text-xl font-black text-cyber-lime uppercase tracking-widest mb-4">Admin Panel</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-black text-cyber-lime uppercase tracking-widest">Admin Panel</h2>
+            {saveStatus === 'saving' && (
+              <span className="text-xs font-mono text-neon-blue flex items-center gap-1 animate-pulse">
+                <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+              </span>
+            )}
+            {saveStatus === 'saved' && (
+              <span className="text-xs font-mono text-cyber-lime flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Saved
+              </span>
+            )}
+          </div>
           
           <div className="flex flex-col gap-2 mb-4 bg-pitch p-1 rounded-lg border border-white/10">
             <div className="flex gap-2">
@@ -137,11 +201,40 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
         )}
 
         <div className="p-4 border-t border-white/5 space-y-3">
+          <div className="flex items-center justify-between text-xs font-mono mb-2">
+            <span className="text-gray-400">Status:</span>
+            {saveStatus === 'saving' && (
+              <span className="text-neon-blue flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+              </span>
+            )}
+            {saveStatus === 'saved' && (
+              <span className="text-cyber-lime flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Saved
+              </span>
+            )}
+            {saveStatus === 'idle' && hasUnsavedChanges && (
+              <span className="text-yellow-400 flex items-center gap-1">
+                Unsaved changes
+              </span>
+            )}
+            {saveStatus === 'idle' && !hasUnsavedChanges && (
+              <span className="text-gray-500 flex items-center gap-1">
+                Up to date
+              </span>
+            )}
+          </div>
           <button 
             onClick={handleSaveAll}
-            className="w-full flex items-center justify-center gap-2 bg-neon-blue text-pitch font-bold uppercase tracking-wider py-3 rounded-lg hover:bg-white transition-colors"
+            disabled={saveStatus === 'saving'}
+            className={`w-full flex items-center justify-center gap-2 font-bold uppercase tracking-wider py-3 rounded-lg transition-colors ${
+              saveStatus === 'saving' 
+                ? 'bg-neon-blue/50 text-pitch cursor-not-allowed' 
+                : 'bg-neon-blue text-pitch hover:bg-white'
+            }`}
           >
-            <Save className="w-4 h-4" /> Save Changes
+            {saveStatus === 'saving' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} 
+            {saveStatus === 'saving' ? 'Saving...' : 'Save Changes'}
           </button>
           <button 
             onClick={onExit}
