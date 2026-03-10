@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PageData, ThemeConfig } from '../data/initialPages';
-import { Save, LogOut, Search, Upload, X, Layout, FileText } from 'lucide-react';
+import { Save, LogOut, Search, Upload, X, Layout, FileText, PlaySquare, KeyRound } from 'lucide-react';
 
 interface Props {
   pages: PageData[];
@@ -14,7 +14,7 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
   const [localTheme, setLocalTheme] = useState<ThemeConfig>(theme);
   const [selectedPageNum, setSelectedPageNum] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'home' | 'pages'>('pages');
+  const [activeTab, setActiveTab] = useState<'home' | 'pages' | 'starter' | 'login'>('pages');
 
   const selectedPage = localPages.find(p => p.pageNumber === selectedPageNum) || localPages[0];
 
@@ -68,19 +68,35 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
         <div className="p-6 border-b border-white/5">
           <h2 className="text-xl font-black text-cyber-lime uppercase tracking-widest mb-4">Admin Panel</h2>
           
-          <div className="flex gap-2 mb-4 bg-pitch p-1 rounded-lg border border-white/10">
-            <button 
-              onClick={() => setActiveTab('home')} 
-              className={`flex-1 py-2 rounded-md text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'home' ? 'bg-charcoal text-neon-blue shadow' : 'text-gray-500 hover:text-gray-300'}`}
-            >
-              <Layout className="w-4 h-4" /> Home
-            </button>
-            <button 
-              onClick={() => setActiveTab('pages')} 
-              className={`flex-1 py-2 rounded-md text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'pages' ? 'bg-charcoal text-neon-blue shadow' : 'text-gray-500 hover:text-gray-300'}`}
-            >
-              <FileText className="w-4 h-4" /> Pages
-            </button>
+          <div className="flex flex-col gap-2 mb-4 bg-pitch p-1 rounded-lg border border-white/10">
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setActiveTab('home')} 
+                className={`flex-1 py-2 rounded-md text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'home' ? 'bg-charcoal text-neon-blue shadow' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <Layout className="w-4 h-4" /> Theme
+              </button>
+              <button 
+                onClick={() => setActiveTab('pages')} 
+                className={`flex-1 py-2 rounded-md text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'pages' ? 'bg-charcoal text-neon-blue shadow' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <FileText className="w-4 h-4" /> Pages
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setActiveTab('starter')} 
+                className={`flex-1 py-2 rounded-md text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'starter' ? 'bg-charcoal text-neon-blue shadow' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <PlaySquare className="w-4 h-4" /> Starter
+              </button>
+              <button 
+                onClick={() => setActiveTab('login')} 
+                className={`flex-1 py-2 rounded-md text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'login' ? 'bg-charcoal text-neon-blue shadow' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                <KeyRound className="w-4 h-4" /> Login
+              </button>
+            </div>
           </div>
 
           {activeTab === 'pages' && (
@@ -116,7 +132,7 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-            <p className="text-sm text-gray-400 font-mono">Configure global theme and layout settings from the main panel.</p>
+            <p className="text-sm text-gray-400 font-mono">Configure settings from the main panel.</p>
           </div>
         )}
 
@@ -258,13 +274,13 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
               )}
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'home' ? (
           <div className="max-w-3xl mx-auto space-y-8">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-12 h-12 rounded-xl bg-charcoal border border-white/10 flex items-center justify-center font-mono text-xl text-neon-blue font-bold">
                 <Layout className="w-6 h-6" />
               </div>
-              <h1 className="text-3xl font-black text-white tracking-tight">Home & Theme Settings</h1>
+              <h1 className="text-3xl font-black text-white tracking-tight">Theme Settings</h1>
             </div>
 
             <div className="space-y-6 bg-charcoal p-8 rounded-2xl border border-white/5">
@@ -374,8 +390,204 @@ export default function AdminPanel({ pages, theme, onSave, onExit }: Props) {
                 </select>
               </div>
             </div>
+
+            <div className="space-y-6 bg-charcoal p-8 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-black text-white tracking-tight">Bottom Embed Settings</h3>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-sm font-mono text-gray-400">Enable Embed</span>
+                  <input 
+                    type="checkbox" 
+                    checked={localTheme.embedEnabled}
+                    onChange={(e) => handleUpdateTheme('embedEnabled', e.target.checked as any)}
+                    className="w-4 h-4 accent-neon-blue"
+                  />
+                </label>
+              </div>
+
+              {localTheme.embedEnabled && (
+                <>
+                  <div>
+                    <label className="block text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">Embed Content (Markdown/Text)</label>
+                    <textarea 
+                      value={localTheme.embedContent || ''}
+                      onChange={(e) => handleUpdateTheme('embedContent', e.target.value)}
+                      rows={4}
+                      className="w-full bg-pitch border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon-blue font-sans resize-y custom-scrollbar"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">Embed Image URL</label>
+                    <div className="flex gap-3 mb-4">
+                      <input 
+                        type="text" 
+                        value={localTheme.embedImageUrl || ''}
+                        onChange={(e) => handleUpdateTheme('embedImageUrl', e.target.value)}
+                        className="flex-1 bg-pitch border border-white/10 rounded-lg px-4 py-3 text-cyber-lime focus:outline-none focus:border-cyber-lime font-mono text-sm"
+                        placeholder="Enter image URL or upload..."
+                      />
+                      <label className="cursor-pointer inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-2 text-sm text-gray-300 transition-colors">
+                        <Upload className="w-4 h-4" />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                if (event.target?.result) {
+                                  handleUpdateTheme('embedImageUrl', event.target.result as string);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }} 
+                        />
+                      </label>
+                    </div>
+                    {localTheme.embedImageUrl && (
+                      <div className="w-full h-48 bg-pitch border border-white/10 rounded-xl overflow-hidden flex items-center justify-center p-2">
+                        <img 
+                          src={localTheme.embedImageUrl} 
+                          alt="Embed Preview" 
+                          className="max-w-full max-h-full object-contain rounded-lg"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        )}
+        ) : activeTab === 'login' ? (
+          <div className="max-w-3xl mx-auto space-y-8">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-xl bg-charcoal border border-white/10 flex items-center justify-center font-mono text-xl text-neon-blue font-bold">
+                <KeyRound className="w-6 h-6" />
+              </div>
+              <h1 className="text-3xl font-black text-white tracking-tight">Login Settings</h1>
+            </div>
+
+            <div className="space-y-6 bg-charcoal p-8 rounded-2xl border border-white/5">
+              <div>
+                <label className="block text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">Login Title</label>
+                <input 
+                  type="text" 
+                  value={localTheme.loginPageTitle || ''}
+                  onChange={(e) => handleUpdateTheme('loginPageTitle', e.target.value)}
+                  className="w-full bg-pitch border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon-blue font-sans"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">Login Description</label>
+                <textarea 
+                  value={localTheme.loginPageDescription || ''}
+                  onChange={(e) => handleUpdateTheme('loginPageDescription', e.target.value)}
+                  rows={2}
+                  className="w-full bg-pitch border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon-blue font-sans resize-y custom-scrollbar"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">Ebook Access Codes (One per line)</label>
+                <textarea 
+                  value={(localTheme.ebookAccessCodes || []).join('\n')}
+                  onChange={(e) => handleUpdateTheme('ebookAccessCodes', e.target.value.split('\n').filter(c => c.trim() !== ''))}
+                  rows={3}
+                  className="w-full bg-pitch border border-white/10 rounded-lg px-4 py-3 text-cyber-lime focus:outline-none focus:border-cyber-lime font-mono text-sm resize-y custom-scrollbar"
+                  placeholder="Enter access codes..."
+                />
+              </div>
+            </div>
+          </div>
+        ) : activeTab === 'starter' ? (
+          <div className="max-w-3xl mx-auto space-y-8">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-xl bg-charcoal border border-white/10 flex items-center justify-center font-mono text-xl text-neon-blue font-bold">
+                <PlaySquare className="w-6 h-6" />
+              </div>
+              <h1 className="text-3xl font-black text-white tracking-tight">Starter Page Settings</h1>
+            </div>
+
+            <div className="space-y-6 bg-charcoal p-8 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-black text-white tracking-tight">Starter Page</h3>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-sm font-mono text-gray-400">Enable Starter Page</span>
+                  <input 
+                    type="checkbox" 
+                    checked={localTheme.starterPageEnabled ?? true}
+                    onChange={(e) => handleUpdateTheme('starterPageEnabled', e.target.checked as any)}
+                    className="w-4 h-4 accent-neon-blue"
+                  />
+                </label>
+              </div>
+
+              {localTheme.starterPageEnabled !== false && (
+                <>
+                  <div>
+                    <label className="block text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">Starter Page Image URL (Top Left)</label>
+                    <div className="flex gap-3 mb-4">
+                      <input 
+                        type="text" 
+                        value={localTheme.starterPageImageUrl || ''}
+                        onChange={(e) => handleUpdateTheme('starterPageImageUrl', e.target.value)}
+                        className="flex-1 bg-pitch border border-white/10 rounded-lg px-4 py-3 text-cyber-lime focus:outline-none focus:border-cyber-lime font-mono text-sm"
+                        placeholder="Enter image URL or upload..."
+                      />
+                      <label className="cursor-pointer inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-2 text-sm text-gray-300 transition-colors">
+                        <Upload className="w-4 h-4" />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                if (event.target?.result) {
+                                  handleUpdateTheme('starterPageImageUrl', event.target.result as string);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }} 
+                        />
+                      </label>
+                    </div>
+                    {localTheme.starterPageImageUrl && (
+                      <div className="w-full h-48 bg-pitch border border-white/10 rounded-xl overflow-hidden flex items-center justify-center p-2">
+                        <img 
+                          src={localTheme.starterPageImageUrl} 
+                          alt="Starter Page Preview" 
+                          className="max-w-full max-h-full object-contain rounded-lg"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">Starter Page Content (Markdown/Text)</label>
+                    <textarea 
+                      value={localTheme.starterPageContent || ''}
+                      onChange={(e) => handleUpdateTheme('starterPageContent', e.target.value)}
+                      rows={12}
+                      className="w-full bg-pitch border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-neon-blue font-sans resize-y custom-scrollbar"
+                      placeholder="# Welcome&#10;&#10;Add your text here..."
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -8,12 +8,11 @@ interface Props {
 
 export default function AdminLogin({ onLoginSuccess, onCancel }: Props) {
   const [code, setCode] = useState('');
-  const [ebookCode, setEbookCode] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (code === 'sungjin12@' && ebookCode === 'capcut-pro-33') {
+    if (code === 'sungj222@#&-neonsenpai') {
       onLoginSuccess();
     } else {
       setError('Invalid credentials. Access denied.');
@@ -44,16 +43,6 @@ export default function AdminLogin({ onLoginSuccess, onCancel }: Props) {
               onChange={(e) => setCode(e.target.value)}
               className="w-full bg-pitch border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyber-lime font-mono transition-colors"
               placeholder="Enter admin code"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">Ebook Code</label>
-            <input 
-              type="password" 
-              value={ebookCode}
-              onChange={(e) => setEbookCode(e.target.value)}
-              className="w-full bg-pitch border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyber-lime font-mono transition-colors"
-              placeholder="Enter ebook code"
             />
           </div>
 

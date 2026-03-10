@@ -6,6 +6,15 @@ export interface ThemeConfig {
   textColor: string;
   accentColor: string;
   layout: 'horizontal' | 'vertical';
+  embedEnabled: boolean;
+  embedContent: string;
+  embedImageUrl: string;
+  loginPageTitle: string;
+  loginPageDescription: string;
+  ebookAccessCodes: string[];
+  starterPageEnabled: boolean;
+  starterPageImageUrl: string;
+  starterPageContent: string;
 }
 
 export const defaultTheme: ThemeConfig = {
@@ -15,7 +24,16 @@ export const defaultTheme: ThemeConfig = {
   cardColor: "#141414",
   textColor: "#f3f4f6",
   accentColor: "#00f3ff",
-  layout: 'horizontal'
+  layout: 'horizontal',
+  embedEnabled: false,
+  embedContent: "Check out our latest updates!",
+  embedImageUrl: "",
+  loginPageTitle: "Welcome to The Neon Archive",
+  loginPageDescription: "Enter your access code to read the ebook.",
+  ebookAccessCodes: ["FREE-EBOOK-2026"],
+  starterPageEnabled: true,
+  starterPageImageUrl: "https://picsum.photos/seed/starter/800/600",
+  starterPageContent: "# Welcome to the Ebook\n\nThis is the starter page. You can edit this content in the Admin Panel.",
 };
 
 export interface PageData {
