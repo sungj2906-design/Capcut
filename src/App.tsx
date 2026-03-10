@@ -22,7 +22,8 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch('/api/data', {
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/data?t=${timestamp}`, {
           headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache'

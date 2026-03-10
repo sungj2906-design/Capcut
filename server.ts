@@ -27,6 +27,12 @@ app.use(express.json({ limit: '50mb' }));
 
 app.get('/api/data', (req, res) => {
   try {
+    // Prevent CDN and browser caching
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+
     const pagesRow = db.prepare('SELECT value FROM store WHERE key = ?').get('pages') as { value: string } | undefined;
     const themeRow = db.prepare('SELECT value FROM store WHERE key = ?').get('theme') as { value: string } | undefined;
     
