@@ -1,18 +1,25 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import Database from 'better-sqlite3';
 import { Server } from 'socket.io';
 import http from 'http';
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, get, set } from "firebase/database";
 
-const db = new Database('app.db');
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDA1SWtduxdxobWs5vWHf4s0MlY8TdWeHg",
+  authDomain: "ebook-a6601.firebaseapp.com",
+  databaseURL: "https://ebook-a6601-default-rtdb.firebaseio.com",
+  projectId: "ebook-a6601",
+  storageBucket: "ebook-a6601.firebasestorage.app",
+  messagingSenderId: "313272644283",
+  appId: "1:313272644283:web:447c0dbe0495b8650faf9e",
+  measurementId: "G-H2KJRV3V8Y"
+};
 
-// Initialize DB
-db.exec(`
-  CREATE TABLE IF NOT EXISTS store (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  )
-`);
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
 
 const app = express();
 const server = http.createServer(app);
@@ -25,7 +32,7 @@ const io = new Server(server, {
 
 app.use(express.json({ limit: '50mb' }));
 
-app.get('/api/data', (req, res) => {
+app.get('/api/data', async (req, res) => {
   try {
     // Prevent CDN and browser caching
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -33,29 +40,29 @@ app.get('/api/data', (req, res) => {
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
-    const pagesRow = db.prepare('SELECT value FROM store WHERE key = ?').get('pages') as { value: string } | undefined;
-    const themeRow = db.prepare('SELECT value FROM store WHERE key = ?').get('theme') as { value: string } | undefined;
+    const pagesSnapshot = await get(ref(db, 'store/pages'));
+    const themeSnapshot = await get(ref(db, 'store/theme'));
     
-    res.json({
-      pages: pagesRow ? JSON.parse(pagesRow.value) : null,
-      theme: themeRow ? JSON.parse(themeRow.value) : null,
-    });
+    let pages = pagesSnapshot.exists() ? JSON.parse(pagesSnapshot.val()) : null;
+    let theme = themeSnapshot.exists() ? JSON.parse(themeSnapshot.val()) : null;
+
+    res.json({ pages, theme });
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ error: 'Failed to fetch data' });
   }
 });
 
-app.post('/api/data', (req, res) => {
+app.post('/api/data', async (req, res) => {
   try {
     const { pages, theme } = req.body;
     
-    const stmt = db.prepare('INSERT OR REPLACE INTO store (key, value) VALUES (?, ?)');
-    
-    db.transaction(() => {
-      if (pages) stmt.run('pages', JSON.stringify(pages));
-      if (theme) stmt.run('theme', JSON.stringify(theme));
-    })();
+    if (pages) {
+      await set(ref(db, 'store/pages'), JSON.stringify(pages));
+    }
+    if (theme) {
+      await set(ref(db, 'store/theme'), JSON.stringify(theme));
+    }
     
     // Broadcast the update to all connected clients
     io.emit('data_updated', { pages, theme });
